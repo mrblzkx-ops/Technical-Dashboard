@@ -1,0 +1,21 @@
+{
+  "functions": {
+    "api/prices.js": {
+      "maxDuration": 30
+    },
+    "api/mcap.js": {
+      "maxDuration": 15
+    }
+  },
+  "headers": [
+    {
+      "source": "/api/(.*)",
+      "headers": [
+        {
+          "key": "Cache-Control",
+          "value": "s-maxage=21600, stale-while-revalidate=3600"
+        }
+      ]
+    }
+  ]
+}
