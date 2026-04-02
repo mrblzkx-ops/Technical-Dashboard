@@ -1,0 +1,984 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>RRG Dashboard</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500;600&family=Syne:wght@400;500;600;700&display=swap" rel="stylesheet">
+<style>
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0;}
+:root{--bg:#0c0c0e;--bg2:#111114;--bg3:#17171b;--bg4:#1e1e24;--border:rgba(255,255,255,0.07);--border2:rgba(255,255,255,0.13);--text:#e8e4d9;--text2:#7a7870;--text3:#4a4845;--accent:#c8a96e;--accent2:#8b6e3f;--green:#4ade80;--red:#f87171;--r:6px;--rl:10px;}
+html,body{height:100%;background:var(--bg);color:var(--text);font-family:'Syne',sans-serif;font-size:13px;line-height:1.5;overflow:hidden;}
+::-webkit-scrollbar{width:4px;height:4px;}::-webkit-scrollbar-track{background:transparent;}::-webkit-scrollbar-thumb{background:var(--bg4);border-radius:2px;}
+.app{display:grid;grid-template-rows:44px 1fr;height:100vh;overflow:hidden;}
+.topbar{display:flex;align-items:center;padding:0 16px;background:var(--bg2);border-bottom:1px solid var(--border);gap:0;}
+.logo{font-size:12px;font-weight:700;letter-spacing:.15em;color:var(--accent);font-family:'IBM Plex Mono',monospace;flex-shrink:0;}
+.sep{width:1px;height:14px;background:var(--border2);flex-shrink:0;margin:0 12px;}
+.page-tabs{display:flex;margin-right:auto;}
+.ptab{font-family:'IBM Plex Mono',monospace;font-size:10px;padding:0 16px;height:44px;display:flex;align-items:center;gap:6px;border:none;background:none;color:var(--text3);cursor:pointer;letter-spacing:.06em;border-bottom:2px solid transparent;transition:all .15s;position:relative;top:1px;}
+.ptab:hover{color:var(--text2);}
+.ptab.active{color:var(--accent);border-bottom-color:var(--accent);}
+.ptab-num{width:16px;height:16px;border-radius:3px;background:var(--bg4);display:flex;align-items:center;justify-content:center;font-size:9px;color:var(--text3);}
+.ptab.active .ptab-num{background:rgba(200,169,110,.15);color:var(--accent);}
+.tb-right{display:flex;align-items:center;gap:8px;flex-shrink:0;}
+.range-btns{display:flex;gap:2px;background:var(--bg3);border-radius:var(--r);padding:2px;}
+.rbtn{font-family:'IBM Plex Mono',monospace;font-size:10px;padding:3px 10px;border-radius:4px;border:none;background:none;color:var(--text2);cursor:pointer;transition:all .12s;}
+.rbtn.active{background:var(--bg4);color:var(--accent);}
+.btn{font-family:'IBM Plex Mono',monospace;font-size:10px;padding:4px 12px;border-radius:var(--r);border:1px solid var(--border2);background:none;color:var(--text2);cursor:pointer;white-space:nowrap;transition:all .12s;}
+.btn:hover{background:var(--bg3);color:var(--text);}
+.btn-accent{background:var(--accent2);border-color:var(--accent);color:var(--accent);}
+.btn-accent:hover{background:var(--accent);color:var(--bg);}
+#data-badge{font-family:'IBM Plex Mono',monospace;font-size:9px;padding:2px 7px;border-radius:3px;background:rgba(186,117,23,.12);color:var(--accent);border:1px solid rgba(186,117,23,.25);letter-spacing:.05em;}
+.page{display:none;overflow:hidden;height:100%;}
+.page.active{display:grid;}
+#page-l1{grid-template-columns:360px 5px 1fr 5px 300px;}
+#page-l2{grid-template-columns:220px 5px 1fr 5px 320px;}
+.pc{display:flex;flex-direction:column;overflow:hidden;}
+.pc.dark{background:var(--bg2);}
+.pc.br{border-right:1px solid var(--border);}
+.ph{padding:7px 12px;border-bottom:1px solid var(--border);display:flex;align-items:center;justify-content:space-between;flex-shrink:0;}
+.pt{font-size:9px;font-family:'IBM Plex Mono',monospace;letter-spacing:.1em;color:var(--text3);text-transform:uppercase;}
+.pm{font-size:9px;font-family:'IBM Plex Mono',monospace;color:var(--text3);}
+.rw{flex:1;padding:6px;overflow:hidden;position:relative;min-height:0;}
+canvas{display:block;}
+.rot-list{overflow-y:auto;}
+.rot-row{display:grid;grid-template-columns:110px 1fr 64px;align-items:center;gap:8px;padding:4px 12px;cursor:pointer;transition:background .1s;}
+.rot-row:hover{background:var(--bg3);}
+.rot-row.sel{background:var(--bg3);border-left:2px solid var(--accent);}
+.rot-name{display:flex;align-items:center;gap:6px;font-size:11px;font-weight:500;overflow:hidden;}
+.rdot{width:7px;height:7px;border-radius:50%;flex-shrink:0;}
+.rbt{height:18px;position:relative;display:flex;align-items:center;}
+.rcl{position:absolute;left:50%;width:1px;height:18px;background:var(--border2);}
+.rbf{height:10px;border-radius:2px;position:absolute;top:4px;}
+.rpct{font-family:'IBM Plex Mono',monospace;font-size:11px;text-align:right;}
+.rss{flex:1;display:flex;flex-direction:column;overflow:hidden;min-height:0;}
+.rsw{flex:1;padding:8px;overflow:hidden;position:relative;min-height:100px;}
+.si{padding:10px 12px;border-bottom:1px solid var(--border);flex-shrink:0;overflow-y:auto;max-height:50%;}
+.sn{font-size:15px;font-weight:600;margin-bottom:6px;display:flex;align-items:center;gap:8px;}
+.sd{width:10px;height:10px;border-radius:50%;flex-shrink:0;}
+.cps{display:flex;flex-wrap:wrap;gap:4px;margin-bottom:8px;}
+.cp{font-family:'IBM Plex Mono',monospace;font-size:9px;padding:2px 7px;border-radius:3px;background:var(--bg3);color:var(--text2);border:1px solid var(--border);}
+.qc{font-family:'IBM Plex Mono',monospace;font-size:10px;font-weight:600;padding:2px 8px;border-radius:3px;}
+.sg{display:grid;grid-template-columns:1fr 1fr;gap:6px;margin-bottom:8px;}
+.sb{background:var(--bg3);border-radius:var(--r);padding:7px 9px;}
+.sl{font-size:9px;font-family:'IBM Plex Mono',monospace;color:var(--text3);letter-spacing:.05em;text-transform:uppercase;}
+.sv{font-size:16px;font-weight:500;font-family:'IBM Plex Mono',monospace;margin-top:2px;}
+.wr{display:flex;align-items:center;gap:6px;margin-bottom:4px;}
+.wl{font-family:'IBM Plex Mono',monospace;font-size:9px;color:var(--text3);width:40px;flex-shrink:0;}
+.wt{flex:1;height:5px;background:var(--bg4);border-radius:3px;overflow:hidden;}
+.wf{height:100%;border-radius:3px;}
+.wp{font-family:'IBM Plex Mono',monospace;font-size:9px;color:var(--text2);width:30px;text-align:right;}
+.tks{flex:1;display:flex;flex-direction:column;overflow:hidden;min-height:0;}
+.tklist{flex:1;overflow-y:auto;padding:4px 8px;}
+.tkrow{display:grid;grid-template-columns:52px 1fr 20px 44px;align-items:center;gap:6px;padding:5px 6px;border-radius:var(--r);cursor:pointer;transition:background .1s;}
+.tkrow:hover{background:var(--bg3);}
+.tkrow.active{background:var(--bg3);border-left:2px solid var(--accent);}
+.tksym{font-family:'IBM Plex Mono',monospace;font-size:11px;font-weight:600;}
+.tkbw{height:4px;background:var(--bg4);border-radius:2px;overflow:hidden;}
+.tkb{height:100%;border-radius:2px;}
+.qdot{width:7px;height:7px;border-radius:50%;}
+.tkrsr{font-family:'IBM Plex Mono',monospace;font-size:10px;color:var(--text2);text-align:right;}
+.secitem{display:flex;align-items:center;gap:8px;padding:9px 12px;cursor:pointer;border-bottom:1px solid var(--border);transition:background .1s;}
+.secitem:hover{background:var(--bg3);}
+.secitem.active{background:var(--bg3);border-left:2px solid var(--accent);}
+.secdot{width:8px;height:8px;border-radius:50%;flex-shrink:0;}
+.secname{font-size:12px;font-weight:500;color:var(--text);}
+.seccnt{font-family:'IBM Plex Mono',monospace;font-size:9px;color:var(--text3);margin-left:auto;background:var(--bg4);padding:1px 5px;border-radius:2px;}
+.secq{width:7px;height:7px;border-radius:50%;flex-shrink:0;}
+.empty{display:flex;align-items:center;justify-content:center;flex:1;flex-direction:column;gap:8px;}
+.ei{font-size:28px;opacity:.2;}
+.et{font-size:11px;font-family:'IBM Plex Mono',monospace;color:var(--text3);text-align:center;opacity:.5;}
+.modal-overlay{display:none;position:fixed;inset:0;background:rgba(0,0,0,.75);z-index:100;align-items:center;justify-content:center;}
+.modal-overlay.open{display:flex;}
+.modal{background:var(--bg2);border:1px solid var(--border2);border-radius:var(--rl);padding:20px;width:480px;max-width:95vw;max-height:80vh;display:flex;flex-direction:column;gap:12px;}
+.mt{font-size:13px;font-weight:600;color:var(--text);display:flex;justify-content:space-between;align-items:center;}
+.modal pre{font-family:'IBM Plex Mono',monospace;font-size:10px;color:var(--text2);background:var(--bg3);border:1px solid var(--border);border-radius:var(--r);padding:10px;overflow:auto;flex:1;}
+.ma{display:flex;gap:8px;justify-content:flex-end;}
+.toast{position:fixed;bottom:16px;right:16px;background:var(--bg2);border:1px solid var(--border2);border-radius:var(--rl);padding:8px 14px;font-family:'IBM Plex Mono',monospace;font-size:11px;color:var(--green);opacity:0;transition:opacity .2s;pointer-events:none;z-index:200;}
+.toast.show{opacity:1;}
+.rh{width:5px;cursor:col-resize;background:transparent;flex-shrink:0;z-index:10;position:relative;transition:background .15s;}
+.rh:hover,.rh.d{background:var(--accent2);}
+.rh::after{content:'';position:absolute;top:50%;left:50%;transform:translate(-50%,-50%);width:1px;height:32px;background:var(--border2);border-radius:1px;}
+.rv{height:5px;cursor:row-resize;background:transparent;flex-shrink:0;z-index:10;position:relative;transition:background .15s;}
+.rv:hover,.rv.d{background:var(--accent2);}
+.rv::after{content:'';position:absolute;top:50%;left:50%;transform:translate(-50%,-50%);height:1px;width:32px;background:var(--border2);border-radius:1px;}
+body.cr *{cursor:col-resize!important;user-select:none!important;}
+body.rr *{cursor:row-resize!important;user-select:none!important;}
+#loader{position:fixed;inset:0;background:#0c0c0e;z-index:999;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:16px;font-family:'IBM Plex Mono',monospace;}
+#loader-logo{font-size:13px;color:#c8a96e;letter-spacing:.15em;}
+#loader-msg{font-size:11px;color:#4a4845;}
+#loader-track{width:200px;height:2px;background:#1e1e24;border-radius:1px;overflow:hidden;}
+#loader-bar{height:100%;background:#c8a96e;border-radius:1px;width:0%;transition:width .3s;}
+</style>
+</head>
+<body>
+<div id="loader">
+  <div id="loader-logo">■ RRG</div>
+  <div id="loader-msg">Connecting…</div>
+  <div id="loader-track"><div id="loader-bar"></div></div>
+</div>
+
+<div class="app">
+  <div class="topbar">
+    <div class="logo">■ RRG</div>
+    <div class="sep"></div>
+    <div class="page-tabs">
+      <button class="ptab active" onclick="switchPage('l1',this)"><span class="ptab-num">1</span>Layer 1 — Sectors</button>
+      <button class="ptab" onclick="switchPage('l2',this)"><span class="ptab-num">2</span>Layer 2 — Tokens</button>
+    </div>
+    <div class="tb-right">
+      <div class="range-btns">
+        <button class="rbtn" onclick="setRange('1W',this)">1W</button>
+        <button class="rbtn active" onclick="setRange('1M',this)">1M</button>
+        <button class="rbtn" onclick="setRange('3M',this)">3M</button>
+        <button class="rbtn" onclick="setRange('6M',this)">6M</button>
+      </div>
+      <span id="data-badge">LOADING</span>
+      <button class="btn" onclick="showImport()">Import config</button>
+      <button class="btn" onclick="showExport()">Export JSON</button>
+    </div>
+  </div>
+
+  <!-- PAGE 1 -->
+  <div class="page active" id="page-l1">
+    <div class="pc dark br" id="l1-left">
+      <div class="ph"><span class="pt">Sectors vs BTC — Layer 1 RRG</span><span class="pm" id="l1-meta">—</span></div>
+      <div class="rw" id="l1-wrap"><canvas id="l1-canvas"></canvas></div>
+    </div>
+    <div class="rh" id="rh-l1-1"></div>
+    <div class="pc br" id="l1-center">
+      <div id="rot-sec" style="flex:0 0 auto;border-bottom:1px solid var(--border);">
+        <div class="ph"><span class="pt">Sector rotation — RS-Ratio vs BTC</span></div>
+        <div class="rot-list" id="rot-list" style="max-height:220px;"></div>
+      </div>
+      <div class="rv" id="rv-l1-1"></div>
+      <div class="rss">
+        <div class="ph"><span class="pt" id="l1-rs-title">RS-Ratio — select a sector</span><span class="pm" id="l1-rs-meta"></span></div>
+        <div class="rsw"><canvas id="l1-rs-chart"></canvas></div>
+      </div>
+    </div>
+    <div class="rh" id="rh-l1-2"></div>
+    <div class="pc dark" id="l1-right">
+      <div id="l1-detail" style="display:flex;flex-direction:column;flex:1;overflow:hidden;min-height:0;">
+        <div class="empty"><div class="ei">◈</div><div class="et">Click a sector dot or<br>rotation bar to inspect</div></div>
+      </div>
+    </div>
+  </div>
+
+  <!-- PAGE 2 -->
+  <div class="page" id="page-l2">
+    <div class="pc dark br" id="l2-left">
+      <div class="ph"><span class="pt">Select sector</span><span class="pm" id="l2-sec-meta">—</span></div>
+      <div id="l2-sec-items" style="flex:1;overflow-y:auto;"></div>
+    </div>
+    <div class="rh" id="rh-l2-1"></div>
+    <div class="pc br" id="l2-center">
+      <div class="ph"><span class="pt" id="l2-rrg-title">Token RRG vs sector index</span><span class="pm" id="l2-rrg-meta"></span></div>
+      <div class="rw" id="l2-wrap" style="flex:0 0 auto;height:300px;"><canvas id="l2-canvas"></canvas></div>
+      <div class="rv" id="rv-l2-1"></div>
+      <div class="rss">
+        <div class="ph"><span class="pt" id="l2-rs-title">RS-Ratio — select a token</span><span class="pm" id="l2-rs-meta"></span></div>
+        <div class="rsw"><canvas id="l2-rs-chart"></canvas></div>
+      </div>
+    </div>
+    <div class="rh" id="rh-l2-2"></div>
+    <div class="pc dark" id="l2-right">
+      <div class="ph"><span class="pt" id="l2-tok-title">Tokens</span><span class="pm" id="l2-tok-meta"></span></div>
+      <div id="l2-tok-list" class="tklist"></div>
+    </div>
+  </div>
+</div>
+
+<div class="modal-overlay" id="modal">
+  <div class="modal">
+    <div class="mt"><span id="modal-title">Config</span><button class="btn" onclick="closeModal()" style="padding:2px 8px;">✕</button></div>
+    <pre id="modal-body"></pre>
+    <div class="ma" id="modal-actions"></div>
+  </div>
+</div>
+<div class="toast" id="toast"></div>
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.js"></script>
+<script>
+'use strict';
+
+/* ─────────────────────────────────────────────
+   CONFIG
+───────────────────────────────────────────── */
+let CONFIG = {
+  globalBenchmark:'BTC',
+  categories:[
+    {name:'L1s',color:'#639922',benchmark:'BTC',weight:'mcap',emaFast:10,emaSlow:26,tickers:['BTC','SOL','ETH','BNB','XRP','TRX','ADA','AVAX','SUI','TON','APT','SEI','BERA','SONIC','INJ','ATOM']},
+    {name:'DEFI',color:'#7F77DD',benchmark:'BTC',weight:'equal',emaFast:10,emaSlow:26,tickers:['AAVE','CRV','ENA','PENDLE','SKY','MORPHO','SYRUP']},
+    {name:'DeAI',color:'#378ADD',benchmark:'BTC',weight:'equal',emaFast:10,emaSlow:26,tickers:['TAO','NEAR','ICP','RENDER','FET','WLD']},
+    {name:'MEME',color:'#E24B4A',benchmark:'BTC',weight:'capped',emaFast:10,emaSlow:26,tickers:['DOGE','SHIB','PEPE','WIF','BONK','FLOKI','MOG','TURBO','FARTCOIN']},
+    {name:'RWA/CeFi',color:'#BA7517',benchmark:'BTC',weight:'equal',emaFast:10,emaSlow:26,tickers:['ONDO','POLYX','CFG','MPL','TRU','XLM','CC']},
+    {name:'INFRA',color:'#5DCAA5',benchmark:'BTC',weight:'equal',emaFast:10,emaSlow:26,tickers:['LINK','PYTH','API3','BAND','TRB','ZRO','2Z']},
+    {name:'PRIVACY',color:'#D85A30',benchmark:'BTC',weight:'mcap',emaFast:10,emaSlow:26,tickers:['XMR','ZEC','DASH','RAIL']},
+    {name:'DERIVATIVES',color:'#D4537E',benchmark:'BTC',weight:'equal',emaFast:10,emaSlow:26,tickers:['HYPE','SNX','DYDX','DRIFT','DERIVE']},
+    {name:'XMMs/Pads',color:'#1D9E75',benchmark:'BTC',weight:'equal',emaFast:10,emaSlow:26,tickers:['UNI','CAKE','VIRTUAL','RAY','JUP','AERO']},
+    {name:'ROBOTICS',color:'#534AB7',benchmark:'BTC',weight:'equal',emaFast:10,emaSlow:26,tickers:['IOTX','PEAQ']},
+  ]
+};
+
+/* ─────────────────────────────────────────────
+   COINGECKO ID MAP
+───────────────────────────────────────────── */
+const CGIDS = {
+  BTC:'bitcoin',ETH:'ethereum',SOL:'solana',BNB:'binancecoin',XRP:'ripple',
+  TRX:'tron',ADA:'cardano',AVAX:'avalanche-2',SUI:'sui',TON:'the-open-network',
+  APT:'aptos',SEI:'sei-network',BERA:'berachain-bera',SONIC:'sonic-3',
+  INJ:'injective-protocol',ATOM:'cosmos',
+  AAVE:'aave',CRV:'curve-dao-token',ENA:'ethena',PENDLE:'pendle',
+  SKY:'sky',MORPHO:'morpho',SYRUP:'maple-finance',
+  TAO:'bittensor',NEAR:'near',ICP:'internet-computer',RENDER:'render-token',
+  FET:'fetch-ai',WLD:'worldcoin-wld',
+  DOGE:'dogecoin',SHIB:'shiba-inu',PEPE:'pepe',WIF:'dogwifcoin',BONK:'bonk',
+  FLOKI:'floki',MOG:'mog-coin',TURBO:'turbo',FARTCOIN:'fartcoin',
+  ONDO:'ondo-finance',POLYX:'polymesh-network',CFG:'centrifuge',MPL:'maple',
+  TRU:'truefi',XLM:'stellar',CC:'canton-network',
+  LINK:'chainlink',PYTH:'pyth-network',API3:'api3',BAND:'band-protocol',
+  TRB:'tellor',ZRO:'layerzero','2Z':'doublezero',
+  XMR:'monero',ZEC:'zcash',DASH:'dash',RAIL:'railgun',
+  HYPE:'hyperliquid',SNX:'synthetix-network-token',DYDX:'dydx-chain',
+  DRIFT:'drift-protocol',DERIVE:'derive',
+  UNI:'uniswap',CAKE:'pancakeswap-token',VIRTUAL:'virtual-protocol',
+  RAY:'raydium',JUP:'jupiter-exchange-solana',AERO:'aerodrome-finance',
+  IOTX:'iotex',PEAQ:'peaq',
+};
+
+/* ─────────────────────────────────────────────
+   MCAP FALLBACKS (USD millions)
+───────────────────────────────────────────── */
+const MCAP_FB = {
+  BTC:1400000,ETH:240000,SOL:60000,BNB:85000,XRP:130000,TRX:22000,ADA:25000,
+  AVAX:8000,SUI:7000,TON:15000,APT:3000,SEI:800,BERA:500,SONIC:400,INJ:2000,ATOM:2500,
+  AAVE:3000,CRV:500,ENA:1500,PENDLE:400,SKY:200,MORPHO:300,SYRUP:100,
+  TAO:2000,NEAR:3000,ICP:4000,RENDER:2000,FET:1000,WLD:1500,
+  DOGE:25000,SHIB:8000,PEPE:4000,WIF:1500,BONK:2000,FLOKI:1000,
+  MOG:200,TURBO:200,FARTCOIN:500,
+  ONDO:2000,POLYX:300,CFG:100,MPL:80,TRU:100,XLM:5000,CC:5400,
+  LINK:10000,PYTH:1500,API3:200,BAND:150,TRB:300,ZRO:500,'2Z':250,
+  XMR:3000,ZEC:600,DASH:400,RAIL:50,
+  HYPE:5000,SNX:500,DYDX:300,DRIFT:200,DERIVE:50,
+  UNI:5000,CAKE:800,VIRTUAL:600,RAY:400,JUP:1500,AERO:400,
+  IOTX:200,PEAQ:100,
+};
+
+/* ─────────────────────────────────────────────
+   PRICE STORE — raw absolute prices (USD)
+   priceStore[ticker] = [p0, p1, p2, ...]
+───────────────────────────────────────────── */
+const priceStore = {};
+let mcapStore = {...MCAP_FB};
+let btcLen = 0; // canonical length from BTC data
+
+/* ─────────────────────────────────────────────
+   DATA LOADING
+───────────────────────────────────────────── */
+function setLoader(pct, msg) {
+  document.getElementById('loader-bar').style.width = pct + '%';
+  document.getElementById('loader-msg').textContent = msg;
+}
+
+async function loadAll() {
+  const allTickers = [...new Set(
+    CONFIG.categories.flatMap(c => c.tickers).concat(['BTC'])
+  )];
+  const cgIds = [...new Set(allTickers.map(t => CGIDS[t]).filter(Boolean))];
+
+  setLoader(5, 'Fetching prices from CoinGecko…');
+
+  // Fetch in chunks of 25
+  const CHUNK = 25;
+  let done = 0;
+  for (let i = 0; i < cgIds.length; i += CHUNK) {
+    const chunk = cgIds.slice(i, i + CHUNK);
+    try {
+      const res = await fetch(`/api/prices?batch=${chunk.join(',')}&days=180`);
+      if (!res.ok) throw new Error(`HTTP ${res.status}`);
+      const data = await res.json(); // { cgId: [[ts, price], ...] }
+
+      for (const [cgId, pts] of Object.entries(data)) {
+        if (!pts || pts.length < 2) continue;
+        // Find ticker for this cgId
+        const ticker = Object.keys(CGIDS).find(k => CGIDS[k] === cgId);
+        if (ticker) {
+          // Store raw USD prices
+          priceStore[ticker] = pts.map(([, p]) => p);
+        }
+      }
+    } catch (e) {
+      console.warn('Batch fetch error:', e.message);
+    }
+    done += chunk.length;
+    setLoader(5 + Math.round(done / cgIds.length * 70), `Fetched ${done}/${cgIds.length} tickers…`);
+    if (i + CHUNK < cgIds.length) await new Promise(r => setTimeout(r, 150));
+  }
+
+  // Use BTC as the canonical length reference
+  if (priceStore['BTC'] && priceStore['BTC'].length > 0) {
+    btcLen = priceStore['BTC'].length;
+  } else {
+    btcLen = 180;
+    console.warn('BTC prices not available — using simulated');
+  }
+
+  setLoader(78, 'Fetching market caps…');
+  try {
+    const mcapRes = await fetch(`/api/mcap?ids=${cgIds.join(',')}`);
+    if (mcapRes.ok) {
+      const mcData = await mcapRes.json(); // { cgId: marketCapUSD }
+      for (const [cgId, mcUsd] of Object.entries(mcData)) {
+        const ticker = Object.keys(CGIDS).find(k => CGIDS[k] === cgId);
+        if (ticker && mcUsd > 0) mcapStore[ticker] = mcUsd / 1e6;
+      }
+    }
+  } catch (e) {
+    console.warn('Mcap fetch error:', e.message);
+  }
+
+  setLoader(95, 'Building RRG…');
+  await new Promise(r => setTimeout(r, 200));
+
+  const loaded = Object.keys(priceStore).length;
+  const badge = document.getElementById('data-badge');
+  if (loaded > 10) {
+    badge.textContent = `LIVE · ${loaded} tickers`;
+    badge.style.background = 'rgba(74,222,128,.12)';
+    badge.style.color = '#4ade80';
+    badge.style.borderColor = 'rgba(74,222,128,.25)';
+  } else {
+    badge.textContent = 'SIMULATED';
+  }
+}
+
+/* ─────────────────────────────────────────────
+   PRICE HELPERS
+   All price series are aligned to btcLen points.
+   Missing prefix is filled with the first known price.
+   Missing suffix is filled with the last known price.
+───────────────────────────────────────────── */
+function getAligned(ticker) {
+  const raw = priceStore[ticker];
+  if (!raw || raw.length === 0) return null;
+
+  // Align to btcLen
+  const out = new Array(btcLen);
+  if (raw.length >= btcLen) {
+    // More data than needed — take last btcLen
+    for (let i = 0; i < btcLen; i++) out[i] = raw[raw.length - btcLen + i];
+  } else {
+    // Fewer points — pad start with first price
+    const pad = btcLen - raw.length;
+    for (let i = 0; i < pad; i++) out[i] = raw[0];
+    for (let i = 0; i < raw.length; i++) out[pad + i] = raw[i];
+  }
+  return out;
+}
+
+/* Rebase price array so first element = 100 */
+function rebase(prices) {
+  const base = prices[0];
+  if (!base || base === 0) return prices.map(() => 100);
+  return prices.map(p => (p / base) * 100);
+}
+
+function getBTC() {
+  const aligned = getAligned('BTC');
+  if (aligned) return rebase(aligned);
+  // Simulated fallback
+  const out = [100];
+  for (let i = 1; i < btcLen; i++) out.push(out[i-1] * (1 + (Math.random()-0.499)*0.026));
+  return out;
+}
+
+function getPrices(ticker) {
+  const aligned = getAligned(ticker);
+  if (aligned) return rebase(aligned);
+  // Simulated fallback — deterministic
+  let x = ticker.split('').reduce((a,c)=>a+c.charCodeAt(0)*31,17) % 99991 + 1;
+  const rng = () => { x=(x*9301+49297)%233280; return x/233280; };
+  const out = [100];
+  for (let i = 1; i < btcLen; i++) out.push(Math.max(1, out[i-1]*(1+(rng()-0.5)*0.08)));
+  return out;
+}
+
+/* ─────────────────────────────────────────────
+   WEIGHTING
+───────────────────────────────────────────── */
+function computeWeights(tickers, method) {
+  const n = tickers.length;
+  if (!n) return [];
+  if (method === 'equal') return tickers.map(() => 1/n);
+
+  const mcaps = tickers.map(t => mcapStore[t] || 100);
+  const tot = mcaps.reduce((s,v)=>s+v, 0);
+
+  if (method === 'mcap') return mcaps.map(m => m/tot);
+
+  if (method === 'capped') {
+    const CAP = 0.25;
+    let w = mcaps.map(m => m/tot);
+    for (let iter = 0; iter < 20; iter++) {
+      const excess = w.reduce((s,x) => s + Math.max(0, x-CAP), 0);
+      if (excess < 1e-9) break;
+      const capped = w.map(x => Math.min(x, CAP));
+      const underSum = capped.reduce((s,x)=>s+x, 0);
+      w = capped.map(x => x < CAP ? x + excess*(x/underSum) : CAP);
+    }
+    const s = w.reduce((a,b)=>a+b,0);
+    return w.map(x => x/s);
+  }
+
+  return tickers.map(() => 1/n);
+}
+
+/* ─────────────────────────────────────────────
+   INDEX BUILDER
+   Returns array of length btcLen — weighted avg of rebased prices
+───────────────────────────────────────────── */
+function buildIndex(tickers, weights) {
+  if (!tickers.length) return new Array(btcLen).fill(100);
+  const series = tickers.map(t => getPrices(t));
+  const out = new Array(btcLen);
+  for (let d = 0; d < btcLen; d++) {
+    let v = 0;
+    for (let i = 0; i < tickers.length; i++) v += weights[i] * series[i][d];
+    out[d] = v;
+  }
+  return out;
+}
+
+/* ─────────────────────────────────────────────
+   RS CALCULATION
+───────────────────────────────────────────── */
+function ema(arr, period) {
+  const k = 2 / (period + 1);
+  const out = [arr[0]];
+  for (let i = 1; i < arr.length; i++) out.push(arr[i]*k + out[i-1]*(1-k));
+  return out;
+}
+
+function calcRS(assetPrices, bmPrices, ef, es) {
+  const len = Math.min(assetPrices.length, bmPrices.length);
+  if (len < es + 11) return { rsr: [], rsm: [] };
+
+  const rs = [];
+  for (let i = 0; i < len; i++) {
+    const b = bmPrices[i];
+    rs.push(b > 0 ? assetPrices[i] / b : 1);
+  }
+
+  const e1 = ema(rs, ef);
+  const e2 = ema(rs, es);
+  const rsr = e1.map((v, i) => (e2[i] > 0 ? v / e2[i] : 1) * 100);
+
+  const MOM = 10;
+  const rsm = rsr.map((v, i) => i < MOM ? null : (rsr[i-MOM] > 0 ? v / rsr[i-MOM] : 1) * 100);
+
+  return { rsr, rsm };
+}
+
+function quad(x, y) {
+  if (x >= 100 && y >= 100) return { l:'Leading',   c:'#1D9E75' };
+  if (x >= 100 && y  < 100) return { l:'Weakening', c:'#BA7517' };
+  if (x  < 100 && y >= 100) return { l:'Improving', c:'#7F77DD' };
+  return                           { l:'Lagging',   c:'#E24B4A' };
+}
+
+function tailPts(rsr, rsm, n) {
+  const pts = [];
+  for (let i = Math.max(0, rsr.length - n); i < rsr.length; i++) {
+    if (rsm[i] != null) pts.push({ x: rsr[i], y: rsm[i] });
+  }
+  return pts;
+}
+
+/* ─────────────────────────────────────────────
+   STATE
+───────────────────────────────────────────── */
+let sectorData = [];
+let selSector = null;
+let selToken = null;
+let currentPage = 'l1';
+let currentRange = '1M';
+let chartL1Rs = null, chartL2Rs = null;
+
+function tailN() { return currentRange==='1W'?5:currentRange==='1M'?14:currentRange==='3M'?22:30; }
+function rangeDays() { return currentRange==='1W'?7:currentRange==='1M'?30:currentRange==='3M'?90:180; }
+// Computation window — enough EMA warmup but biased to selected range
+function windowDays() { return currentRange==='1W'?60:currentRange==='1M'?90:currentRange==='3M'?120:180; }
+
+/* ─────────────────────────────────────────────
+   COMPUTE SECTOR DATA
+───────────────────────────────────────────── */
+function computeAll() {
+  if (btcLen === 0) return;
+  const btcFull = getBTC();
+  const wd = windowDays();
+  const btcPrices = btcFull.slice(-wd);
+
+  sectorData = CONFIG.categories.map(cat => {
+    try {
+      const weights = computeWeights(cat.tickers, cat.weight);
+      const idxFull = buildIndex(cat.tickers, weights);
+      const index = idxFull.slice(-wd);
+      const { rsr, rsm } = calcRS(index, btcPrices, cat.emaFast, cat.emaSlow);
+
+      if (!rsr.length) {
+        return { cat, weights, index:idxFull, rsr:[], rsm:[], lastRsr:100, lastRsm:100, tail:[], q:quad(100,100) };
+      }
+
+      const lastRsr = rsr[rsr.length - 1];
+      const validRsm = rsm.filter(v => v != null);
+      const lastRsm = validRsm.length ? validRsm[validRsm.length - 1] : 100;
+
+      return {
+        cat, weights,
+        index: idxFull, // keep full index for L2 token RS calculation
+        rsr, rsm,
+        lastRsr, lastRsm,
+        tail: tailPts(rsr, rsm, tailN()),
+        q: quad(lastRsr, lastRsm)
+      };
+    } catch (e) {
+      console.error(`Error computing ${cat.name}:`, e);
+      return { cat, weights:[], index:[], rsr:[], rsm:[], lastRsr:100, lastRsm:100, tail:[], q:quad(100,100) };
+    }
+  });
+}
+
+function computeTokRS(sd) {
+  const wd = windowDays();
+  const idxSliced = sd.index.slice(-wd);
+
+  return sd.cat.tickers.map(sym => {
+    try {
+      const pFull = getPrices(sym);
+      const prices = pFull.slice(-wd);
+      const { rsr, rsm } = calcRS(prices, idxSliced, sd.cat.emaFast, sd.cat.emaSlow);
+      const lr = rsr.length ? rsr[rsr.length-1] : 100;
+      const validRsm = rsm.filter(v => v != null);
+      const lm = validRsm.length ? validRsm[validRsm.length-1] : 100;
+      return { sym, rsr:lr, rsm:lm, tail:tailPts(rsr, rsm, tailN()), q:quad(lr,lm), rsrSeries:rsr };
+    } catch (e) {
+      return { sym, rsr:100, rsm:100, tail:[], q:quad(100,100), rsrSeries:[] };
+    }
+  });
+}
+
+/* ─────────────────────────────────────────────
+   RRG CANVAS DRAW
+───────────────────────────────────────────── */
+function drawRRG(canvasId, wrapId, entities, clickCb) {
+  const canvas = document.getElementById(canvasId);
+  const wrap = document.getElementById(wrapId);
+  if (!canvas || !wrap) return;
+
+  const W = wrap.clientWidth || 300;
+  const H = wrap.clientHeight || 300;
+  const dpr = window.devicePixelRatio || 1;
+  canvas.width = W * dpr; canvas.height = H * dpr;
+  canvas.style.width = W + 'px'; canvas.style.height = H + 'px';
+  const ctx = canvas.getContext('2d');
+  ctx.scale(dpr, dpr);
+
+  const P = { l:34, r:14, t:14, b:28 };
+  const pw = W - P.l - P.r, ph = H - P.t - P.b;
+
+  // Auto-scale axes around data
+  const allX = entities.map(e => e.rsr).concat(entities.flatMap(e => (e.tail||[]).map(p=>p.x))).filter(v => isFinite(v));
+  const allY = entities.map(e => e.rsm).concat(entities.flatMap(e => (e.tail||[]).map(p=>p.y))).filter(v => isFinite(v));
+
+  if (!allX.length) { ctx.fillStyle='#0d0d10'; ctx.fillRect(0,0,W,H); return; }
+
+  const pad = 4;
+  const xMn = Math.min(94, ...allX) - pad, xMx = Math.max(106, ...allX) + pad;
+  const yMn = Math.min(94, ...allY) - pad, yMx = Math.max(106, ...allY) + pad;
+  const rg = Math.max(xMx-xMn, yMx-yMn);
+  const xMid = (xMn+xMx)/2, yMid = (yMn+yMx)/2;
+  const XMIN=xMid-rg/2, XMAX=xMid+rg/2, YMIN=yMid-rg/2, YMAX=yMid+rg/2;
+  const tx = v => P.l + (v-XMIN)/(XMAX-XMIN)*pw;
+  const ty = v => P.t + ph - (v-YMIN)/(YMAX-YMIN)*ph;
+
+  ctx.fillStyle = '#0d0d10'; ctx.fillRect(0,0,W,H);
+  const cx = tx(100), cy = ty(100);
+
+  [['#1D9E75','Leading',cx,P.t,P.l+pw-cx,cy-P.t,P.l+pw-4,P.t+12,'right'],
+   ['#BA7517','Weakening',cx,cy,P.l+pw-cx,P.t+ph-cy,P.l+pw-4,P.t+ph-5,'right'],
+   ['#7F77DD','Improving',P.l,P.t,cx-P.l,cy-P.t,P.l+5,P.t+12,'left'],
+   ['#E24B4A','Lagging',P.l,cy,cx-P.l,P.t+ph-cy,P.l+5,P.t+ph-5,'left'],
+  ].forEach(([c,lbl,x,y,w,h,lx,ly,a]) => {
+    ctx.fillStyle = c+'0f'; ctx.fillRect(x,y,w,h);
+    ctx.font='8px sans-serif'; ctx.fillStyle=c+'88'; ctx.textAlign=a; ctx.fillText(lbl,lx,ly);
+  });
+
+  ctx.strokeStyle='rgba(255,255,255,0.14)'; ctx.lineWidth=0.75; ctx.setLineDash([4,4]);
+  ctx.beginPath(); ctx.moveTo(cx,P.t); ctx.lineTo(cx,P.t+ph); ctx.stroke();
+  ctx.beginPath(); ctx.moveTo(P.l,cy); ctx.lineTo(P.l+pw,cy); ctx.stroke();
+  ctx.setLineDash([]);
+
+  [95,100,105].forEach(v => {
+    ctx.strokeStyle='rgba(255,255,255,0.05)'; ctx.lineWidth=0.4;
+    ctx.beginPath(); ctx.moveTo(P.l,ty(v)); ctx.lineTo(P.l+pw,ty(v)); ctx.stroke();
+    ctx.beginPath(); ctx.moveTo(tx(v),P.t); ctx.lineTo(tx(v),P.t+ph); ctx.stroke();
+    ctx.font='8px sans-serif'; ctx.fillStyle='rgba(255,255,255,0.33)';
+    ctx.textAlign='right'; ctx.fillText(v.toFixed(0),P.l-3,ty(v)+3);
+    ctx.textAlign='center'; ctx.fillText(v.toFixed(0),tx(v),P.t+ph+13);
+  });
+
+  ctx.font='8px sans-serif'; ctx.fillStyle='rgba(255,255,255,0.28)';
+  ctx.textAlign='center'; ctx.fillText('RS-Ratio →',P.l+pw/2,H-3);
+  ctx.save(); ctx.translate(10,P.t+ph/2); ctx.rotate(-Math.PI/2); ctx.fillText('RS-Momentum',0,0); ctx.restore();
+
+  entities.forEach(e => {
+    if (!isFinite(e.rsr) || !isFinite(e.rsm)) return;
+    const tail = (e.tail||[]).filter(p=>isFinite(p.x)&&isFinite(p.y));
+    if (tail.length > 1) {
+      for (let i=1; i<tail.length; i++) {
+        const t = i/tail.length;
+        ctx.strokeStyle=e.color; ctx.lineWidth=(e.bold?2.8:1.6)*t; ctx.globalAlpha=t*0.75;
+        ctx.beginPath(); ctx.moveTo(tx(tail[i-1].x),ty(tail[i-1].y)); ctx.lineTo(tx(tail[i].x),ty(tail[i].y)); ctx.stroke();
+      }
+    }
+    ctx.globalAlpha=1;
+    const lx=tx(e.rsr), ly=ty(e.rsm), r=e.bold?7:5;
+    ctx.beginPath(); ctx.arc(lx,ly,r,0,Math.PI*2); ctx.fillStyle=e.color; ctx.fill();
+    if (e.bold) { ctx.strokeStyle='rgba(255,255,255,0.9)'; ctx.lineWidth=1.5; ctx.stroke(); }
+    ctx.font=`${e.bold?'500 ':''}10px 'IBM Plex Mono',monospace`;
+    ctx.fillStyle=e.color; ctx.textAlign='left'; ctx.fillText(e.label,lx+r+3,ly+3);
+  });
+
+  if (clickCb) {
+    canvas.onclick = ev => {
+      const rect = canvas.getBoundingClientRect();
+      const sx = canvas.width/(dpr*rect.width), sy = canvas.height/(dpr*rect.height);
+      const mx = (ev.clientX-rect.left)*sx, my = (ev.clientY-rect.top)*sy;
+      let best=null, bestD=22;
+      entities.forEach((e,i) => {
+        if (!isFinite(e.rsr)||!isFinite(e.rsm)) return;
+        const dx=tx(e.rsr)-mx, dy=ty(e.rsm)-my, d=Math.sqrt(dx*dx+dy*dy);
+        if (d<bestD) { bestD=d; best=i; }
+      });
+      if (best!==null) clickCb(best);
+    };
+  } else { canvas.onclick=null; }
+}
+
+/* ─────────────────────────────────────────────
+   PAGE 1
+───────────────────────────────────────────── */
+function drawL1() {
+  if (currentPage!=='l1') return;
+  drawRRG('l1-canvas','l1-wrap',
+    sectorData.map((sd,i)=>({label:sd.cat.name,color:sd.cat.color,rsr:sd.lastRsr,rsm:sd.lastRsm,tail:sd.tail,bold:selSector===i})),
+    i => selectL1(i)
+  );
+}
+
+function renderRotBars() {
+  const sorted = [...sectorData].sort((a,b)=>b.lastRsr-a.lastRsr);
+  const maxAbs = Math.max(...sorted.map(s=>Math.abs(s.lastRsr-100)), 0.5);
+  document.getElementById('rot-list').innerHTML = sorted.map(sd => {
+    const v = sd.lastRsr-100, pos = v>=0, pct = Math.min(Math.abs(v)/maxAbs*48,48);
+    const idx = sectorData.indexOf(sd);
+    return `<div class="rot-row${selSector===idx?' sel':''}" onclick="selectL1(${idx})">
+      <div class="rot-name"><div class="rdot" style="background:${sd.cat.color}"></div><span style="overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">${sd.cat.name}</span></div>
+      <div class="rbt"><div class="rcl"></div><div class="rbf" style="width:${pct}px;background:${pos?'#4ade80':'#f87171'};${pos?'left:50%':'right:50%'};"></div></div>
+      <div class="rpct" style="color:${pos?'#4ade80':'#f87171'}">${pos?'+':''}${v.toFixed(2)}</div>
+    </div>`;
+  }).join('');
+}
+
+function selectL1(idx) {
+  selSector=idx; selToken=null;
+  drawL1(); renderRotBars(); renderL1Detail(idx); renderL1Rs(sectorData[idx]);
+}
+
+function renderL1Detail(idx) {
+  const sd=sectorData[idx], q=sd.q;
+  const topW=sd.cat.tickers.map((t,i)=>({t,w:sd.weights[i]||0})).sort((a,b)=>b.w-a.w).slice(0,6);
+  const tokData=computeTokRS(sd);
+  const maxR=Math.max(...tokData.map(t=>Math.abs(t.rsr-100)),0.5);
+  document.getElementById('l1-detail').innerHTML=`
+    <div style="display:flex;flex-direction:column;flex:1;overflow:hidden;min-height:0;">
+      <div class="si">
+        <div class="sn"><div class="sd" style="background:${sd.cat.color}"></div>${sd.cat.name}</div>
+        <div class="cps">
+          <span class="cp">vs ${sd.cat.benchmark||'BTC'}</span>
+          <span class="cp">${sd.cat.weight}</span>
+          <span class="cp">${sd.cat.tickers.length} tokens</span>
+          <span class="cp">EMA ${sd.cat.emaFast}/${sd.cat.emaSlow}</span>
+          <span class="qc" style="background:${q.c}22;color:${q.c}">${q.l}</span>
+        </div>
+        <div class="sg">
+          <div class="sb"><div class="sl">RS-Ratio</div><div class="sv" style="color:${sd.lastRsr>=100?'#4ade80':'#f87171'}">${sd.lastRsr.toFixed(2)}</div></div>
+          <div class="sb"><div class="sl">RS-Momentum</div><div class="sv" style="color:${sd.lastRsm>=100?'#4ade80':'#f87171'}">${sd.lastRsm.toFixed(2)}</div></div>
+        </div>
+        <div style="font-size:9px;font-family:'IBM Plex Mono',monospace;color:var(--text3);margin-bottom:5px;text-transform:uppercase;letter-spacing:.06em;">Index weights</div>
+        ${topW.map(({t,w})=>`<div class="wr"><span class="wl">${t}</span><div class="wt"><div class="wf" style="width:${(w*100).toFixed(1)}%;background:${sd.cat.color}"></div></div><span class="wp">${(w*100).toFixed(1)}%</span></div>`).join('')}
+        <div style="margin-top:10px;"><button class="btn btn-accent" style="width:100%;text-align:center;" onclick="goToL2(${idx})">Layer 2 → ${sd.cat.name}</button></div>
+      </div>
+      <div class="tks">
+        <div class="ph"><span class="pt">Token RS vs sector index</span></div>
+        <div class="tklist">
+          ${tokData.sort((a,b)=>b.rsr-a.rsr).map(t=>{
+            const bw=Math.min(Math.abs(t.rsr-100)/maxR*100,100);
+            return `<div class="tkrow"><span class="tksym" style="color:${sd.cat.color}">${t.sym}</span><div class="tkbw"><div class="tkb" style="width:${bw}%;background:${t.rsr>=100?'#4ade8055':'#f8717155'}"></div></div><div class="qdot" style="background:${t.q.c}"></div><span class="tkrsr">${t.rsr.toFixed(1)}</span></div>`;
+          }).join('')}
+        </div>
+      </div>
+    </div>`;
+}
+
+function renderL1Rs(sd) {
+  document.getElementById('l1-rs-title').textContent=`RS-Ratio — ${sd.cat.name} vs ${sd.cat.benchmark||'BTC'}`;
+  document.getElementById('l1-rs-meta').textContent=`EMA ${sd.cat.emaFast}/${sd.cat.emaSlow}`;
+  const days=rangeDays();
+  const data=sd.rsr.slice(-days).filter(v=>isFinite(v));
+  const n=data.length;
+  if(!n){return;}
+  const labels=Array.from({length:n},(_,i)=>{const d=new Date();d.setDate(d.getDate()-(n-1-i));return d.toLocaleDateString('en-GB',{day:'2-digit',month:'short'});});
+  if(chartL1Rs)chartL1Rs.destroy();
+  chartL1Rs=new Chart(document.getElementById('l1-rs-chart').getContext('2d'),{
+    type:'line',
+    data:{labels,datasets:[
+      {label:'RS-Ratio',data,borderColor:sd.cat.color,borderWidth:2,pointRadius:0,tension:0.3,fill:false},
+      {label:'100',data:Array(n).fill(100),borderColor:'rgba(255,255,255,0.14)',borderWidth:1,borderDash:[4,4],pointRadius:0,fill:false}
+    ]},
+    options:{responsive:true,maintainAspectRatio:false,animation:{duration:200},
+      plugins:{legend:{display:false},tooltip:{mode:'index',intersect:false}},
+      scales:{
+        x:{ticks:{color:'rgba(255,255,255,0.35)',font:{size:9},maxTicksLimit:8},grid:{display:false},border:{display:false}},
+        y:{ticks:{color:'rgba(255,255,255,0.35)',font:{size:9},callback:v=>v.toFixed(1)},grid:{color:'rgba(255,255,255,0.05)'},border:{display:false}}
+      }}
+  });
+}
+
+function goToL2(idx) {
+  selSector=idx; selToken=null;
+  switchPage('l2', document.querySelectorAll('.ptab')[1]);
+  setTimeout(()=>{renderL2SectorList(); renderL2Page();},60);
+}
+
+/* ─────────────────────────────────────────────
+   PAGE 2
+───────────────────────────────────────────── */
+function renderL2SectorList() {
+  document.getElementById('l2-sec-meta').textContent=`${CONFIG.categories.length} sectors`;
+  document.getElementById('l2-sec-items').innerHTML=sectorData.map((sd,i)=>`
+    <div class="secitem${selSector===i?' active':''}" onclick="selectL2Sector(${i})">
+      <div class="secdot" style="background:${sd.cat.color}"></div>
+      <span class="secname">${sd.cat.name}</span>
+      <div class="secq" style="background:${sd.q.c}"></div>
+      <span class="seccnt">${sd.cat.tickers.length}</span>
+    </div>`).join('');
+}
+
+function selectL2Sector(idx) {
+  selSector=idx; selToken=null;
+  renderL2SectorList(); renderL2Page();
+}
+
+function renderL2Page() {
+  if(selSector===null) return;
+  const sd=sectorData[selSector];
+  document.getElementById('l2-rrg-title').textContent=`${sd.cat.name} — tokens vs sector index`;
+  document.getElementById('l2-rrg-meta').textContent=`${sd.cat.tickers.length} tokens`;
+  document.getElementById('l2-tok-title').textContent=sd.cat.name;
+  document.getElementById('l2-tok-meta').textContent=`${sd.cat.tickers.length} tokens`;
+  drawL2(); renderL2TokList(selSector);
+}
+
+function drawL2() {
+  if(selSector===null) return;
+  const sd=sectorData[selSector];
+  const tokData=computeTokRS(sd);
+  drawRRG('l2-canvas','l2-wrap',
+    tokData.map((t,i)=>({label:t.sym,color:t.q.c,rsr:t.rsr,rsm:t.rsm,tail:t.tail,bold:selToken===i})),
+    i => { selToken=i; renderL2TokList(selSector); renderL2Rs(sd,computeTokRS(sd)[i]); drawL2(); }
+  );
+}
+
+function renderL2TokList(idx) {
+  const sd=sectorData[idx];
+  const tokData=computeTokRS(sd).sort((a,b)=>b.rsr-a.rsr);
+  const maxR=Math.max(...tokData.map(t=>Math.abs(t.rsr-100)),0.5);
+  document.getElementById('l2-tok-list').innerHTML=tokData.map((t,i)=>{
+    const bw=Math.min(Math.abs(t.rsr-100)/maxR*100,100);
+    return `<div class="tkrow${selToken===i?' active':''}" onclick="clickTok(${i})">
+      <span class="tksym" style="color:${sd.cat.color}">${t.sym}</span>
+      <div class="tkbw"><div class="tkb" style="width:${bw}%;background:${t.rsr>=100?'#4ade8055':'#f8717155'}"></div></div>
+      <div class="qdot" style="background:${t.q.c}"></div>
+      <span class="tkrsr">${t.rsr.toFixed(1)}</span>
+    </div>`;
+  }).join('');
+}
+
+function clickTok(i) {
+  selToken=i;
+  const sd=sectorData[selSector];
+  const tokData=computeTokRS(sd).sort((a,b)=>b.rsr-a.rsr);
+  renderL2TokList(selSector);
+  if(tokData[i]) renderL2Rs(sd, tokData[i]);
+  drawL2();
+}
+
+function renderL2Rs(sd,t) {
+  document.getElementById('l2-rs-title').textContent=`${t.sym} vs ${sd.cat.name} index`;
+  document.getElementById('l2-rs-meta').textContent=t.q.l;
+  const days=rangeDays();
+  const data=t.rsrSeries.slice(-days).filter(v=>isFinite(v));
+  const n=data.length;
+  if(!n) return;
+  const labels=Array.from({length:n},(_,i)=>{const d=new Date();d.setDate(d.getDate()-(n-1-i));return d.toLocaleDateString('en-GB',{day:'2-digit',month:'short'});});
+  if(chartL2Rs)chartL2Rs.destroy();
+  chartL2Rs=new Chart(document.getElementById('l2-rs-chart').getContext('2d'),{
+    type:'line',
+    data:{labels,datasets:[
+      {label:'RS-Ratio',data,borderColor:t.q.c,borderWidth:2,pointRadius:0,tension:0.3,fill:false},
+      {label:'100',data:Array(n).fill(100),borderColor:'rgba(255,255,255,0.14)',borderWidth:1,borderDash:[4,4],pointRadius:0,fill:false}
+    ]},
+    options:{responsive:true,maintainAspectRatio:false,animation:{duration:200},
+      plugins:{legend:{display:false},tooltip:{mode:'index',intersect:false}},
+      scales:{
+        x:{ticks:{color:'rgba(255,255,255,0.35)',font:{size:9},maxTicksLimit:8},grid:{display:false},border:{display:false}},
+        y:{ticks:{color:'rgba(255,255,255,0.35)',font:{size:9},callback:v=>v.toFixed(1)},grid:{color:'rgba(255,255,255,0.05)'},border:{display:false}}
+      }}
+  });
+}
+
+/* ─────────────────────────────────────────────
+   NAVIGATION
+───────────────────────────────────────────── */
+function switchPage(page,btn) {
+  currentPage=page;
+  document.querySelectorAll('.ptab').forEach(b=>b.classList.remove('active')); btn.classList.add('active');
+  document.querySelectorAll('.page').forEach(p=>p.classList.remove('active'));
+  document.getElementById('page-'+page).classList.add('active');
+  setTimeout(()=>{
+    if(page==='l1'){drawL1();if(chartL1Rs)chartL1Rs.resize();}
+    if(page==='l2'){renderL2SectorList();if(selSector!==null)drawL2();}
+  },30);
+}
+
+function setRange(r,btn) {
+  currentRange=r;
+  document.querySelectorAll('.rbtn').forEach(b=>b.classList.remove('active')); btn.classList.add('active');
+  computeAll(); // recompute RS over new window — values + dot positions change
+  drawL1(); renderRotBars();
+  if(selSector!==null){
+    renderL1Detail(selSector);
+    renderL1Rs(sectorData[selSector]);
+    if(currentPage==='l2'){
+      drawL2();
+      renderL2TokList(selSector);
+      if(selToken!==null){
+        const sd=sectorData[selSector];
+        const tokData=computeTokRS(sd).sort((a,b)=>b.rsr-a.rsr);
+        if(tokData[selToken]) renderL2Rs(sd, tokData[selToken]);
+      }
+    }
+  }
+}
+
+/* ─────────────────────────────────────────────
+   IMPORT / EXPORT
+───────────────────────────────────────────── */
+function showImport() {
+  const inp=document.createElement('input'); inp.type='file'; inp.accept='.json';
+  inp.onchange=e=>{
+    const f=e.target.files[0]; if(!f)return;
+    const r=new FileReader();
+    r.onload=ev=>{
+      try{
+        CONFIG=JSON.parse(ev.target.result);
+        computeAll(); drawL1(); renderRotBars(); renderL2SectorList();
+        document.getElementById('l1-meta').textContent=`${CONFIG.categories.length} sectors`;
+        toast(`Loaded ${CONFIG.categories.length} categories`);
+      }catch{toast('Invalid JSON');}
+    };r.readAsText(f);
+  };inp.click();
+}
+
+function showExport() {
+  document.getElementById('modal-title').textContent='Config JSON';
+  document.getElementById('modal-body').textContent=JSON.stringify(CONFIG,null,2);
+  document.getElementById('modal-actions').innerHTML=`<button class="btn" onclick="navigator.clipboard.writeText(document.getElementById('modal-body').textContent).then(()=>toast('Copied'))">Copy</button><button class="btn btn-accent" onclick="dlJSON()">Download .json</button>`;
+  document.getElementById('modal').classList.add('open');
+}
+function closeModal(){document.getElementById('modal').classList.remove('open');}
+function dlJSON(){const b=new Blob([JSON.stringify(CONFIG,null,2)],{type:'application/json'});const u=URL.createObjectURL(b);const a=document.createElement('a');a.href=u;a.download='rrg-config.json';a.click();URL.revokeObjectURL(u);toast('Downloaded');}
+function toast(msg){const el=document.getElementById('toast');el.textContent=msg;el.classList.add('show');setTimeout(()=>el.classList.remove('show'),2500);}
+document.addEventListener('keydown',e=>{if(e.key==='Escape')closeModal();});
+document.getElementById('modal').addEventListener('click',e=>{if(e.target===document.getElementById('modal'))closeModal();});
+
+/* ─────────────────────────────────────────────
+   RESIZE HANDLES
+───────────────────────────────────────────── */
+function colResizer(hId,gridId) {
+  const h=document.getElementById(hId),g=document.getElementById(gridId);if(!h||!g)return;
+  h.addEventListener('mousedown',e=>{
+    e.preventDefault();h.classList.add('d');document.body.classList.add('cr');
+    const sx=e.clientX,cols=g.style.gridTemplateColumns.split(' ').map(c=>parseInt(c)||5);
+    const a0=cols[0],c0=cols[4];
+    function mv(e){
+      const dx=e.clientX-sx,tot=g.clientWidth,fix=10;
+      let a=Math.max(120,hId.endsWith('1')?a0+dx:a0);
+      let c=Math.max(120,hId.endsWith('2')?c0-dx:c0);
+      g.style.gridTemplateColumns=`${a}px 5px ${Math.max(160,tot-fix-a-c)}px 5px ${c}px`;
+      setTimeout(()=>{if(currentPage==='l1')drawL1();if(currentPage==='l2'&&selSector!==null)drawL2();if(chartL1Rs)chartL1Rs.resize();if(chartL2Rs)chartL2Rs.resize();},10);
+    }
+    function up(){h.classList.remove('d');document.body.classList.remove('cr');document.removeEventListener('mousemove',mv);document.removeEventListener('mouseup',up);}
+    document.addEventListener('mousemove',mv);document.addEventListener('mouseup',up);
+  });
+}
+function rowResizer(hId,tgtId,dir) {
+  const h=document.getElementById(hId),t=document.getElementById(tgtId);if(!h||!t)return;
+  h.addEventListener('mousedown',e=>{
+    e.preventDefault();h.classList.add('d');document.body.classList.add('rr');
+    const sy=e.clientY,sh=t.offsetHeight;
+    function mv(e){const nh=Math.max(80,Math.min(sh+(e.clientY-sy)*dir,600));t.style.flex=`0 0 ${nh}px`;t.style.height=`${nh}px`;if(selSector!==null&&currentPage==='l2')drawL2();if(chartL1Rs)chartL1Rs.resize();if(chartL2Rs)chartL2Rs.resize();}
+    function up(){h.classList.remove('d');document.body.classList.remove('rr');document.removeEventListener('mousemove',mv);document.removeEventListener('mouseup',up);}
+    document.addEventListener('mousemove',mv);document.addEventListener('mouseup',up);
+  });
+}
+function initResize() {
+  colResizer('rh-l1-1','page-l1');colResizer('rh-l1-2','page-l1');
+  colResizer('rh-l2-1','page-l2');colResizer('rh-l2-2','page-l2');
+  rowResizer('rv-l1-1','rot-sec',1);
+  rowResizer('rv-l2-1','l2-wrap',1);
+}
+window.addEventListener('resize',()=>{
+  if(currentPage==='l1')drawL1();
+  if(currentPage==='l2'&&selSector!==null)drawL2();
+  if(chartL1Rs)chartL1Rs.resize();if(chartL2Rs)chartL2Rs.resize();
+});
+
+/* ─────────────────────────────────────────────
+   INIT
+───────────────────────────────────────────── */
+(async()=>{
+  try{
+    await loadAll();
+    computeAll();
+  }catch(e){
+    console.error('Init error:',e);
+    btcLen=180;computeAll();
+  }
+  // Hide loader
+  const loader=document.getElementById('loader');
+  loader.style.opacity='0';loader.style.transition='opacity .4s';
+  setTimeout(()=>loader.remove(),450);
+  // Render
+  setTimeout(()=>{
+    drawL1();renderRotBars();renderL2SectorList();
+    document.getElementById('l1-meta').textContent=`${CONFIG.categories.length} sectors`;
+    initResize();
+  },80);
+})();
+</script>
+</body>
+</html>
